@@ -2,9 +2,7 @@ import pandas as pd
 import yfinance as yf
 import streamlit as st
 import datetime as dt
-import cufflinks as cf
 from plotly import graph_objs as go
-from PIL import Image
 
 st.set_page_config(
     page_title="SUNSET50 - Analysis",
@@ -22,15 +20,26 @@ st.markdown(
     unsafe_allow_html=True
 )
 
-st.sidebar.subheader('SUNSET50 🌞')
+st.sidebar.subheader('SUNSET - Analysis 🌞')
 
-set50 = pd.read_csv("set50.csv")
-symbols = set50['Symbol'].sort_values().tolist()
-
-ticker = st.sidebar.selectbox(
-    'Choose a SET50 Stock 📈',
-     symbols)
-
+#Retrieving tickers data
+ticker_list = pd.read_csv("https://raw.githubusercontent.com/mattapol/SUNSET-Tech/main/csv/symbol_set.csv")
+set_th = st.sidebar.selectbox('Choose a Type SET', ('SET50', 'SET100', 'SETHD', 'sSET', 'SETCLMV', 'SETWB'))
+if(set_th == 'SET50'):
+    ticker_lists = ticker_list[1:51]
+elif(set_th == 'SET100'):
+    ticker_lists = ticker_list[52:152]
+elif(set_th == 'SETHD'):
+    ticker_lists = ticker_list[153:183]
+elif(set_th == 'sSET'):
+    ticker_lists = ticker_list[184:307]
+elif(set_th == 'SETCLMV'):
+    ticker_lists = ticker_list[308:361]
+else:
+    ticker_lists = ticker_list[362:392]
+    
+symbols = ticker_lists['Symbol'].sort_values().tolist()
+ticker = st.sidebar.selectbox('Choose a SET Stock 📈', ticker_lists) # Select ticker symbol
 infoType = st.sidebar.radio(
         "Choose an info type",
         ('Fundamental', 'Statistics', 'Prediction', 'Short Note')
@@ -59,7 +68,7 @@ elif(infoType == 'Statistics'):
                                                 step=1)
     past_y = n_days * 1 + 1
 
-    #show years 
+#show years 
     show_days = int(n_days)
     stock = yf.Ticker(ticker)
     info = stock.info 
@@ -173,9 +182,9 @@ elif(infoType == 'Prediction'):
 
 #For Forecast
     n_day = st.sidebar.number_input("Day of prediction... (1-30) days",
-                                                value=1,
+                                                value=14,
                                                 min_value=1, 
-                                                max_value=30, 
+                                                max_value=365, 
                                                 step=1)
     period = n_day * 1 + 1
 
@@ -183,8 +192,8 @@ elif(infoType == 'Prediction'):
     data = load_data(ticker)
     data_load_state.text("Loading data...done! 🎉🎊")
 
-    st.subheader('Share Price last 5 days ⏰')
-    st.write(data.tail())
+    st.write('Share Price', START, '-', TODAY, '⏰')
+    st.write(data.sort_values(by='Date', ascending=False))
 
     def plot_raw_data():
         fig = go.Figure()
@@ -194,31 +203,224 @@ elif(infoType == 'Prediction'):
         st.plotly_chart(fig)
 
     plot_raw_data()
+    st.subheader('Descriptive Statistics 📚')
+    st.write(data.describe())
 
 #Forecasting
     from fbprophet import Prophet
     from fbprophet.plot import plot_plotly
+    from fbprophet.plot import add_changepoints_to_plot
+    import matplotlib.pyplot as plt
+    from sklearn.metrics import mean_squared_error, r2_score, mean_absolute_error, accuracy_score, median_absolute_error, explained_variance_score, confusion_matrix, precision_score, recall_score
+    from sklearn.model_selection import train_test_split
+    import ml_metrics as metrics  
+    import seaborn as sns; sns.set()
+    import xgboost as xgb
+    from prophet.plot import add_changepoints_to_plot
 
     df_train = data[['Date', 'Close']]
     df_train = df_train.rename(columns={"Date": "ds", "Close": "y"})
 
-    m = Prophet()
-    m.fit(df_train)
-    future = m.make_future_dataframe(periods=period)
-    forecast = m.predict(future)
+    m1 = Prophet(daily_seasonality=True)
+    m1.fit(df_train)
+    # Create Future Dates
+    future = m1.make_future_dataframe(periods=period)
+    # Predict Prices
+    forecast = m1.predict(future)
 
-    st.subheader('Forecast data 💸')
-    st.write(forecast.tail())
+    st.subheader('Price Forecast 💸')
+    st.write(forecast.sort_values(by='ds', ascending=False))
+
+    #Sklearn Metrics
+    metric_df = (forecast.set_index('ds')[['yhat']].join(df_train.set_index('ds')[['y']]).reset_index()).sort_values(by='ds', ascending=False)
+    metric_df.dropna(inplace=True)
+    st.write(metric_df)
+    
+    #R2 OR R-Squared
+    st.write('R-Squared = ', r2_score(metric_df.y, metric_df.yhat))
+    #MAE OR Mean Absolute Error
+    st.write('Mean Absolute Error = ', mean_absolute_error(metric_df.y, metric_df.yhat))
+    #MSE OR Mean Squared Error
+    st.write('Mean Squared Error = ', mean_squared_error(metric_df.y, metric_df.yhat))
+    #RMSE OR Root Mean Square Error
+    st.write('Root Mean Square Error = ', metrics.rmse(metric_df.y, metric_df.yhat))
+
+    fig1 = m1.plot(forecast)
+    a = add_changepoints_to_plot(fig1.gca(), m1, forecast)
 
     st.write('forecast data')
-    fig1 = plot_plotly(m, forecast)
+    fig1 = m1.plot(forecast)
     st.plotly_chart(fig1)
 
     st.write('forecast components')
-    fig2 = m.plot_components(forecast)
+    fig1 = m1.plot_components(forecast)
+    st.write(fig1)
+
+#Adding the Holiday Effect
+    new_year = pd.DataFrame({ #1
+        'holiday': 'New Year',
+        'ds': pd.to_datetime(['2021-01-01', '2020-01-01', '2019-01-01', '2018-01-01', '2017-01-01', '2016-01-01', '2015-01-01', '2014-01-01', '2013-01-01', '2012-01-01', '2011-01-01', '2010-01-01']),
+        'lower_window': 0,
+        'upper_window': 1, 
+        })
+    chinese_new_year = pd.DataFrame({ #2(Special**The First Year)
+        'holiday': 'Chinese New Year',
+        'ds': pd.to_datetime(['2021-02-12', '2020-02-12', '2019-02-12', '2018-02-12', '2017-02-12', '2016-02-12', '2015-02-12', '2014-02-12', '2013-02-12', '2012-02-12', '2011-02-12', '2010-02-12']),
+        'lower_window': 0,
+        'upper_window': 1,
+        })
+    makha_bucha = pd.DataFrame({ #3
+        'holiday': 'Makha Bucha',
+        'ds': pd.to_datetime(['2021-02-26', '2020-02-26', '2019-02-26', '2018-02-26', '2017-02-26', '2016-02-26', '2015-02-26', '2014-02-26', '2013-02-26', '2012-02-26', '2011-02-26', '2010-02-26']),
+        'lower_window': 0,
+        'upper_window': 1,
+        })
+    chakri = pd.DataFrame({ #4
+        'holiday': 'Chakri',
+        'ds': pd.to_datetime(['2021-04-06', '2020-04-06', '2019-04-06', '2018-04-06', '2017-04-06', '2016-04-06', '2015-04-06', '2014-04-06', '2013-04-06', '2012-04-06', '2011-04-06', '2010-04-06']),
+        'lower_window': 0,
+        'upper_window': 1,
+        })
+    songkran = pd.DataFrame({ #5
+        'holiday': 'Songkran',
+        'ds': pd.to_datetime(['2021-04-13', '2020-04-13', '2019-04-13', '2018-04-13', '2017-04-13', '2016-04-13', '2015-04-13', '2014-04-13', '2013-04-13', '2012-04-13', '2011-04-13', '2010-04-13',
+                              '2021-04-14', '2020-04-14', '2019-04-14', '2018-04-14', '2017-04-14', '2016-04-14', '2015-04-14', '2014-04-14', '2013-04-14', '2012-04-14', '2011-04-14', '2010-04-14',
+                              '2021-04-15', '2020-04-15', '2019-04-15', '2018-04-15', '2017-04-15', '2016-04-15', '2015-04-15', '2014-04-15', '2013-04-15', '2012-04-15', '2011-04-15', '2010-04-15']),
+        'lower_window': 0,
+        'upper_window': 1,
+        })
+    coronation = pd.DataFrame({ #6
+        'holiday': 'Coronation',
+        'ds': pd.to_datetime(['2021-05-04', '2020-05-04', '2019-05-04', '2018-05-04', '2017-05-04', '2016-05-04', '2015-05-04', '2014-05-04', '2013-05-04', '2012-05-04', '2011-05-04', '2010-05-04']),
+        'lower_window': 0,
+        'upper_window': 1,
+        })
+    visakha_bucha = pd.DataFrame({ #7
+        'holiday': 'Visakha Bucha',
+        'ds': pd.to_datetime(['2021-05-26', '2020-05-26', '2019-05-26', '2018-05-26', '2017-05-26', '2016-05-26', '2015-05-26', '2014-05-26', '2013-05-26', '2012-05-26', '2011-05-26', '2010-05-26']),
+        'lower_window': 0,
+        'upper_window': 1,
+        })
+    queen_suthida_birthday = pd.DataFrame({ #8
+        'holiday': 'Queen Suthida Birthday',
+        'ds': pd.to_datetime(['2021-06-03', '2020-06-03', '2019-06-03']),
+        'lower_window': 0,
+        'upper_window': 1,
+        })
+    asanha_bucha = pd.DataFrame({ #9
+        'holiday': 'Asanha Bucha',
+        'ds': pd.to_datetime(['2021-07-24', '2020-07-24', '2019-07-24', '2018-07-24', '2017-07-24', '2016-07-24', '2015-07-24', '2014-07-24', '2013-07-24', '2012-07-24', '2011-07-24', '2010-07-24']),
+        'lower_window': 0,
+        'upper_window': 1,
+        })
+    buddhist_lent = pd.DataFrame({ #10
+        'holiday': 'Buddhist Lent',
+        'ds': pd.to_datetime(['2021-07-25', '2020-07-25', '2019-07-25', '2018-07-25', '2017-07-25', '2016-07-25', '2015-07-25', '2014-07-25', '2013-07-25', '2012-07-25', '2011-07-25', '2010-07-25']),
+        'lower_window': 0,
+        'upper_window': 1,
+        })
+    s_asanha_bucha = pd.DataFrame({ #11(Special**Only Year-Substitution for Asanha Bucha Day)
+        'holiday': 'Substitution for Asanha Bucha',
+        'ds': pd.to_datetime(['2021-07-26', '2020-07-26', '2019-07-26', '2018-07-26', '2017-07-26', '2016-07-26', '2015-07-26', '2014-07-26', '2013-07-26', '2012-07-26', '2011-07-26', '2010-07-26']),
+        'lower_window': 0,
+        'upper_window': 1,
+        })
+    king_maha_vajiralongkorn_birthday = pd.DataFrame({ #12
+        'holiday': 'King Maha Vajiralongkorn Birthday',
+        'ds': pd.to_datetime(['2021-07-28', '2020-07-28', '2019-07-28']),
+        'lower_window': 0,
+        'upper_window': 1,
+        })
+    mother_birthday = pd.DataFrame({ #13
+        'holiday': 'Queen Sirikit, Mother’s Birthday',
+        'ds': pd.to_datetime(['2021-08-12', '2020-08-12', '2019-08-12', '2018-08-12', '2017-08-12', '2016-08-12', '2015-08-12', '2014-08-12', '2013-08-12', '2012-08-12', '2011-08-12', '2010-08-12']),
+        'lower_window': 0,
+        'upper_window': 1,
+        })
+    prince_of_songkla_memorial = pd.DataFrame({ #14 
+        'holiday': 'Prince of Songkla Memorial',
+        'ds': pd.to_datetime(['2021-09-24', '2020-09-24', '2019-09-24', '2018-09-24', '2017-09-24', '2016-09-24', '2015-09-24', '2014-09-24', '2013-09-24', '2012-09-24', '2011-09-24', '2010-09-24']),
+        'lower_window': 0,
+        'upper_window': 1,
+        })
+    king_bhumibol_the_great_memorial = pd.DataFrame({ #15
+        'holiday': 'King Bhumibol Adulyadej The Great Memorial',
+        'ds': pd.to_datetime(['2021-10-13', '2020-10-13', '2019-10-13', '2018-10-13', '2017-10-13']),
+        'lower_window': 0,
+        'upper_window': 1,
+        })
+    s_king_chulalongkorn_memorial = pd.DataFrame({ #16(Special**Only Year-Substitution for King Chulalongkorn Memorial Day (Shifted from 25th Oct))
+        'holiday': 'Substitution for King Chulalongkorn Memorial', 
+        'ds': pd.to_datetime(['2021-10-22']),
+        'lower_window': 0,
+        'upper_window': 1,
+        })
+    king_chulalongkorn_memorial = pd.DataFrame({ #17
+        'holiday': 'king_chulalongkorn_memorial',
+        'ds': pd.to_datetime(['2021-10-23', '2020-10-23', '2019-10-23', '2018-10-23', '2017-10-23', '2016-10-23', '2015-10-23', '2014-10-23', '2013-10-23', '2012-10-23', '2011-10-23', '2010-10-23']),
+        'lower_window': 0,
+        'upper_window': 1,
+        })
+    king_bhumibol_the_great_birthday = pd.DataFrame({ #18
+        'holiday': 'King Bhumibol The Great Birthday',
+        'ds': pd.to_datetime(['2021-12-05', '2020-12-05', '2019-12-05', '2018-12-05', '2017-12-05', '2016-12-05', '2015-12-05', '2014-12-05', '2013-12-05', '2012-12-05', '2011-12-05', '2010-12-05']),
+        'lower_window': 0,
+        'upper_window': 1,
+        })
+    s_king_bhumibol_the_great_birthday = pd.DataFrame({ #19(Special**Only Year-Substitution for King Bhumibol The Great Birthday)
+        'holiday': 'Substitution for King Bhumibol The Great Birthday',
+        'ds': pd.to_datetime(['2021-12-06']),
+        'lower_window': 0,
+        'upper_window': 1,
+        })
+    constitution = pd.DataFrame({ #20
+        'holiday': 'Constitution',
+        'ds': pd.to_datetime(['2021-12-10', '2020-12-10', '2019-12-10', '2018-12-10', '2017-12-10', '2016-12-10', '2015-12-10', '2014-12-10', '2013-12-10', '2012-12-10', '2011-12-10', '2010-12-10']),
+        'lower_window': 0,
+        'upper_window': 1,
+        })
+    new_year_eve = pd.DataFrame({ #21
+        'holiday': 'New Year Eve',
+        'ds': pd.to_datetime(['2021-12-31', '2020-12-31', '2019-12-31', '2018-12-31', '2017-12-31', '2016-12-31', '2015-12-31', '2014-12-31', '2013-12-31', '2012-12-31', '2011-12-31', '2010-12-31']),
+        'lower_window': 0,
+        'upper_window': 1,
+        })
+    new_holidays = pd.concat((new_year, chinese_new_year, makha_bucha, chakri, songkran, coronation, visakha_bucha, queen_suthida_birthday, asanha_bucha, buddhist_lent, s_asanha_bucha, 
+                              king_maha_vajiralongkorn_birthday, mother_birthday, prince_of_songkla_memorial, king_bhumibol_the_great_memorial, s_king_chulalongkorn_memorial, 
+                              king_chulalongkorn_memorial, king_bhumibol_the_great_birthday, s_king_bhumibol_the_great_birthday, constitution, new_year_eve))
+    st.write(new_holidays.head())
+
+#Making Predictions
+    m2 = Prophet(holidays=new_holidays, daily_seasonality=True)
+    m2.fit(df_train)
+    future2 = m2.make_future_dataframe(periods=period)
+    forecast2 = m2.predict(future2)
+
+    fig2 = plot_plotly(m2, forecast2)
+    st.plotly_chart(fig2)
+
+    #st.write('forecast components')
+    fig2 = m2.plot_components(forecast2)
     st.write(fig2)
 
-elif(infoType == 'Short Note'):
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+else:
     def show():
         st.title('✅ Short Note')
         # Define initial state.
