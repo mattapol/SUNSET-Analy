@@ -1,6 +1,8 @@
 streamlit==1.0.0
 pandas==1.2.4
 DateTime==4.3
+plot==0.6.5
+plotly==5.1.0
 fbprophet==0.7.1
 yfinance ==0.1.63
 pystan==2.19.1.1
