@@ -170,7 +170,7 @@ elif(infoType == 'Statistics'):
 elif(infoType == 'Prediction'):  
     from datetime import date
     today = date.today()
-    START = st.sidebar.date_input("Start date", date(2020, 1, 1))
+    START = st.sidebar.date_input("Start date", date(2010, 1, 1))
     TODAY = st.sidebar.date_input("End date", max_value=today)
     st.title("Prediction 📈")
 
@@ -210,7 +210,8 @@ elif(infoType == 'Prediction'):
     from fbprophet import Prophet
     from fbprophet.plot import plot_plotly
     from sklearn.metrics import mean_squared_error, r2_score, mean_absolute_error
-
+    import ml_metrics as metrics 
+    
     df_train = data[['Date', 'Close']]
     df_train = df_train.rename(columns={"Date": "ds", "Close": "y"})
 
@@ -235,6 +236,8 @@ elif(infoType == 'Prediction'):
     st.write('Mean Absolute Error = ', mean_absolute_error(metric_df.y, metric_df.yhat))
     #MSE OR Mean Squared Error
     st.write('Mean Squared Error = ', mean_squared_error(metric_df.y, metric_df.yhat))
+    #RMSE OR Root Mean Square Error
+    st.write('Root Mean Square Error = ', metrics.rmse(metric_df.y, metric_df.yhat))
 
     st.write('forecast data')
     fig1 = plot_plotly(m1, forecast)
