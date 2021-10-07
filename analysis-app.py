@@ -218,7 +218,7 @@ elif(infoType == 'Prediction'):
     st.subheader('Price Forecast 💸')
     st.write(forecast.sort_values(by='ds', ascending=False))
 
-m1 = Prophet(daily_seasonality=True)
+    m1 = Prophet(daily_seasonality=True)
     m1.fit(df_train)
     # Create Future Dates
     future = m1.make_future_dataframe(periods=period)
