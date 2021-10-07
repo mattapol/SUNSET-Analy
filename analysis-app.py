@@ -210,7 +210,7 @@ elif(infoType == 'Prediction'):
     from fbprophet import Prophet
     from fbprophet.plot import plot_plotly
     from sklearn.metrics import mean_squared_error, r2_score, mean_absolute_error
-    import ml_metrics as metrics  
+    import metrics  
 
     df_train = data[['Date', 'Close']]
     df_train = df_train.rename(columns={"Date": "ds", "Close": "y"})
