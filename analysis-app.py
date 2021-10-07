@@ -379,23 +379,6 @@ elif(infoType == 'Prediction'):
     fig = m.plot_components(forecast)
     st.write(fig)
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 else:
     def show():
         st.title('✅ Short Note')
