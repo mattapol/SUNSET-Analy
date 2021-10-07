@@ -210,7 +210,6 @@ elif(infoType == 'Prediction'):
     from fbprophet import Prophet
     from fbprophet.plot import plot_plotly
     from sklearn.metrics import mean_squared_error, r2_score, mean_absolute_error
-    import metrics  
 
     df_train = data[['Date', 'Close']]
     df_train = df_train.rename(columns={"Date": "ds", "Close": "y"})
@@ -239,8 +238,6 @@ elif(infoType == 'Prediction'):
     st.write('Mean Absolute Error = ', mean_absolute_error(metric_df.y, metric_df.yhat))
     #MSE OR Mean Squared Error
     st.write('Mean Squared Error = ', mean_squared_error(metric_df.y, metric_df.yhat))
-    #RMSE OR Root Mean Square Error
-    st.write('Root Mean Square Error = ', metrics.rmse(metric_df.y, metric_df.yhat))
 
     st.write('forecast data')
     fig1 = plot_plotly(m1, forecast)
