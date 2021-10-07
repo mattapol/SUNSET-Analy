@@ -214,9 +214,6 @@ elif(infoType == 'Prediction'):
     df_train = data[['Date', 'Close']]
     df_train = df_train.rename(columns={"Date": "ds", "Close": "y"})
 
-    st.subheader('Price Forecast 💸')
-    st.write(forecast.sort_values(by='ds', ascending=False))
-
     m1 = Prophet(daily_seasonality=True)
     m1.fit(df_train)
     # Create Future Dates
