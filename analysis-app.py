@@ -209,52 +209,14 @@ elif(infoType == 'Prediction'):
 #Forecasting
     from fbprophet import Prophet
     from fbprophet.plot import plot_plotly
-    from fbprophet.plot import add_changepoints_to_plot
-    import matplotlib.pyplot as plt
-    from sklearn.metrics import mean_squared_error, r2_score, mean_absolute_error, accuracy_score, median_absolute_error, explained_variance_score, confusion_matrix, precision_score, recall_score
-    from sklearn.model_selection import train_test_split
+    from sklearn.metrics import mean_squared_error, r2_score, mean_absolute_error
     import ml_metrics as metrics  
-    import seaborn as sns; sns.set()
-    import xgboost as xgb
-    from prophet.plot import add_changepoints_to_plot
 
     df_train = data[['Date', 'Close']]
     df_train = df_train.rename(columns={"Date": "ds", "Close": "y"})
 
-    m1 = Prophet(daily_seasonality=True)
-    m1.fit(df_train)
-    # Create Future Dates
-    future = m1.make_future_dataframe(periods=period)
-    # Predict Prices
-    forecast = m1.predict(future)
-
     st.subheader('Price Forecast 💸')
     st.write(forecast.sort_values(by='ds', ascending=False))
-
-    #Sklearn Metrics
-    metric_df = (forecast.set_index('ds')[['yhat']].join(df_train.set_index('ds')[['y']]).reset_index()).sort_values(by='ds', ascending=False)
-    metric_df.dropna(inplace=True)
-    st.write(metric_df)
-    
-    #R2 OR R-Squared
-    st.write('R-Squared = ', r2_score(metric_df.y, metric_df.yhat))
-    #MAE OR Mean Absolute Error
-    st.write('Mean Absolute Error = ', mean_absolute_error(metric_df.y, metric_df.yhat))
-    #MSE OR Mean Squared Error
-    st.write('Mean Squared Error = ', mean_squared_error(metric_df.y, metric_df.yhat))
-    #RMSE OR Root Mean Square Error
-    st.write('Root Mean Square Error = ', metrics.rmse(metric_df.y, metric_df.yhat))
-
-    fig1 = m1.plot(forecast)
-    a = add_changepoints_to_plot(fig1.gca(), m1, forecast)
-
-    st.write('forecast data')
-    fig1 = m1.plot(forecast)
-    st.plotly_chart(fig1)
-
-    st.write('forecast components')
-    fig1 = m1.plot_components(forecast)
-    st.write(fig1)
 
 #Adding the Holiday Effect
     new_year = pd.DataFrame({ #1
@@ -391,17 +353,31 @@ elif(infoType == 'Prediction'):
     st.write(new_holidays.head())
 
 #Making Predictions
-    m2 = Prophet(holidays=new_holidays, daily_seasonality=True)
-    m2.fit(df_train)
-    future2 = m2.make_future_dataframe(periods=period)
-    forecast2 = m2.predict(future2)
+    m = Prophet(holidays=new_holidays, daily_seasonality=True)
+    m.fit(df_train)
+    future = m.make_future_dataframe(periods=period)
+    forecast = m.predict(future)
 
-    fig2 = plot_plotly(m2, forecast2)
-    st.plotly_chart(fig2)
+#Sklearn Metrics
+    metric_df = (forecast.set_index('ds')[['yhat']].join(df_train.set_index('ds')[['y']]).reset_index()).sort_values(by='ds', ascending=False)
+    metric_df.dropna(inplace=True)
+    st.write(metric_df)
+    
+    #R2 OR R-Squared
+    st.write('R-Squared = ', r2_score(metric_df.y, metric_df.yhat))
+    #MAE OR Mean Absolute Error
+    st.write('Mean Absolute Error = ', mean_absolute_error(metric_df.y, metric_df.yhat))
+    #MSE OR Mean Squared Error
+    st.write('Mean Squared Error = ', mean_squared_error(metric_df.y, metric_df.yhat))
+    #RMSE OR Root Mean Square Error
+    st.write('Root Mean Square Error = ', metrics.rmse(metric_df.y, metric_df.yhat))
+    
+    fig = plot_plotly(m, forecast)
+    st.plotly_chart(fig)
 
     #st.write('forecast components')
-    fig2 = m2.plot_components(forecast2)
-    st.write(fig2)
+    fig = m.plot_components(forecast)
+    st.write(fig)
 
 
 
