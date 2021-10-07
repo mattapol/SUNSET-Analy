@@ -218,6 +218,38 @@ elif(infoType == 'Prediction'):
     st.subheader('Price Forecast 💸')
     st.write(forecast.sort_values(by='ds', ascending=False))
 
+m1 = Prophet(daily_seasonality=True)
+    m1.fit(df_train)
+    # Create Future Dates
+    future = m1.make_future_dataframe(periods=period)
+    # Predict Prices
+    forecast = m1.predict(future)
+
+    st.subheader('Price Forecast 💸')
+    st.write(forecast.sort_values(by='ds', ascending=False))
+
+    #Sklearn Metrics
+    metric_df = (forecast.set_index('ds')[['yhat']].join(df_train.set_index('ds')[['y']]).reset_index()).sort_values(by='ds', ascending=False)
+    metric_df.dropna(inplace=True)
+    st.write(metric_df)
+    
+    #R2 OR R-Squared
+    st.write('R-Squared = ', r2_score(metric_df.y, metric_df.yhat))
+    #MAE OR Mean Absolute Error
+    st.write('Mean Absolute Error = ', mean_absolute_error(metric_df.y, metric_df.yhat))
+    #MSE OR Mean Squared Error
+    st.write('Mean Squared Error = ', mean_squared_error(metric_df.y, metric_df.yhat))
+    #RMSE OR Root Mean Square Error
+    st.write('Root Mean Square Error = ', metrics.rmse(metric_df.y, metric_df.yhat))
+
+    st.write('forecast data')
+    fig1 = plot_plotly(m1, forecast)
+    st.plotly_chart(fig1)
+
+    st.write('forecast components')
+    fig1 = m1.plot_components(forecast)
+    st.write(fig1)
+
 #Adding the Holiday Effect
     new_year = pd.DataFrame({ #1
         'holiday': 'New Year',
@@ -350,16 +382,18 @@ elif(infoType == 'Prediction'):
     new_holidays = pd.concat((new_year, chinese_new_year, makha_bucha, chakri, songkran, coronation, visakha_bucha, queen_suthida_birthday, asanha_bucha, buddhist_lent, s_asanha_bucha, 
                               king_maha_vajiralongkorn_birthday, mother_birthday, prince_of_songkla_memorial, king_bhumibol_the_great_memorial, s_king_chulalongkorn_memorial, 
                               king_chulalongkorn_memorial, king_bhumibol_the_great_birthday, s_king_bhumibol_the_great_birthday, constitution, new_year_eve))
-    st.write(new_holidays.head())
-
+    
 #Making Predictions
-    m = Prophet(holidays=new_holidays, daily_seasonality=True)
-    m.fit(df_train)
-    future = m.make_future_dataframe(periods=period)
-    forecast = m.predict(future)
+    m2 = Prophet(holidays=new_holidays, daily_seasonality=True)
+    m2.fit(df_train)
+    future2 = m2.make_future_dataframe(periods=period, include_history=True)
+    forecast2 = m2.predict(future2)
 
-#Sklearn Metrics
-    metric_df = (forecast.set_index('ds')[['yhat']].join(df_train.set_index('ds')[['y']]).reset_index()).sort_values(by='ds', ascending=False)
+    st.subheader('Price Forecast 💸')
+    st.write(forecast2.sort_values(by='ds', ascending=False))
+
+    #Sklearn Metrics
+    metric_df = (forecast2.set_index('ds')[['yhat']].join(df_train.set_index('ds')[['y']]).reset_index()).sort_values(by='ds', ascending=False)
     metric_df.dropna(inplace=True)
     st.write(metric_df)
     
@@ -371,13 +405,13 @@ elif(infoType == 'Prediction'):
     st.write('Mean Squared Error = ', mean_squared_error(metric_df.y, metric_df.yhat))
     #RMSE OR Root Mean Square Error
     st.write('Root Mean Square Error = ', metrics.rmse(metric_df.y, metric_df.yhat))
-    
-    fig = plot_plotly(m, forecast)
-    st.plotly_chart(fig)
+
+    fig2 = plot_plotly(m2, forecast2)
+    st.plotly_chart(fig2)
 
     #st.write('forecast components')
-    fig = m.plot_components(forecast)
-    st.write(fig)
+    fig2 = m2.plot_components(forecast2)
+    st.write(fig2)
 
 else:
     def show():
