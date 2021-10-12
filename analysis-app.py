@@ -170,7 +170,7 @@ elif(infoType == 'Statistics'):
 elif(infoType == 'Prediction'):  
     from datetime import date
     today = date.today()
-    START = st.sidebar.date_input("Start date", date(2010, 1, 1))
+    START = st.sidebar.date_input("Start date", date(2000, 1, 1))
     TODAY = st.sidebar.date_input("End date", max_value=today)
     st.title("Prediction 📈")
 
