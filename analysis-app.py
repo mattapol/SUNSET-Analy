@@ -181,7 +181,7 @@ elif(infoType == 'Prediction'):
         return data
 
 #For Forecast
-    n_day = st.sidebar.number_input("Day of prediction... (1-30) days",
+    n_day = st.sidebar.number_input("Day of prediction... (1-365) days",
                                                 value=14,
                                                 min_value=1, 
                                                 max_value=365, 
@@ -192,17 +192,20 @@ elif(infoType == 'Prediction'):
     data = load_data(ticker)
     data_load_state.text("Loading data...done! 🎉🎊")
 
-    st.write('Share Price', START, '-', TODAY, '⏰')
-    st.write(data.sort_values(by='Date', ascending=False))
+    
+    st.subheader('Stock Price 📋')
 
     def plot_raw_data():
         fig = go.Figure()
         fig.add_trace(go.Scatter(x=data['Date'], y=data['Open'], name='stock_open'))
         fig.add_trace(go.Scatter(x=data['Date'], y=data['Close'], name='stock_close'))
-        fig.layout.update(title_text="Time Series Data ⏳", xaxis_rangeslider_visible=True)
+        fig.layout.update(xaxis_rangeslider_visible=True)
         st.plotly_chart(fig)
 
     plot_raw_data()
+
+    st.write(data.sort_values(by='Date', ascending=False))
+
     st.subheader('Descriptive Statistics 📚')
     st.write(data.describe())
 
@@ -210,42 +213,10 @@ elif(infoType == 'Prediction'):
     from fbprophet import Prophet
     from fbprophet.plot import plot_plotly
     from sklearn.metrics import mean_squared_error, r2_score, mean_absolute_error
-    import ml_metrics as metrics 
-    
+    import math
+
     df_train = data[['Date', 'Close']]
     df_train = df_train.rename(columns={"Date": "ds", "Close": "y"})
-
-    m1 = Prophet(daily_seasonality=True)
-    m1.fit(df_train)
-    # Create Future Dates
-    future = m1.make_future_dataframe(periods=period)
-    # Predict Prices
-    forecast = m1.predict(future)
-
-    st.subheader('Price Forecast 💸')
-    st.write(forecast.sort_values(by='ds', ascending=False))
-
-    #Sklearn Metrics
-    metric_df = (forecast.set_index('ds')[['yhat']].join(df_train.set_index('ds')[['y']]).reset_index()).sort_values(by='ds', ascending=False)
-    metric_df.dropna(inplace=True)
-    st.write(metric_df)
-    
-    #R2 OR R-Squared
-    st.write('R-Squared = ', r2_score(metric_df.y, metric_df.yhat))
-    #MAE OR Mean Absolute Error
-    st.write('Mean Absolute Error = ', mean_absolute_error(metric_df.y, metric_df.yhat))
-    #MSE OR Mean Squared Error
-    st.write('Mean Squared Error = ', mean_squared_error(metric_df.y, metric_df.yhat))
-    #RMSE OR Root Mean Square Error
-    st.write('Root Mean Square Error = ', metrics.rmse(metric_df.y, metric_df.yhat))
-
-    st.write('forecast data')
-    fig1 = plot_plotly(m1, forecast)
-    st.plotly_chart(fig1)
-
-    st.write('forecast components')
-    fig1 = m1.plot_components(forecast)
-    st.write(fig1)
 
 #Adding the Holiday Effect
     new_year = pd.DataFrame({ #1
@@ -292,12 +263,12 @@ elif(infoType == 'Prediction'):
         'lower_window': 0,
         'upper_window': 1,
         })
-    queen_suthida_birthday = pd.DataFrame({ #8
-        'holiday': 'Queen Suthida Birthday',
-        'ds': pd.to_datetime(['2021-06-03', '2020-06-03', '2019-06-03']),
-        'lower_window': 0,
-        'upper_window': 1,
-        })
+    # queen_suthida_birthday = pd.DataFrame({ #8
+    #     'holiday': 'Queen Suthida Birthday',
+    #     'ds': pd.to_datetime(['2021-06-03', '2020-06-03', '2019-06-03']),
+    #     'lower_window': 0,
+    #     'upper_window': 1,
+    #     })
     asanha_bucha = pd.DataFrame({ #9
         'holiday': 'Asanha Bucha',
         'ds': pd.to_datetime(['2021-07-24', '2020-07-24', '2019-07-24', '2018-07-24', '2017-07-24', '2016-07-24', '2015-07-24', '2014-07-24', '2013-07-24', '2012-07-24', '2011-07-24', '2010-07-24']),
@@ -316,12 +287,12 @@ elif(infoType == 'Prediction'):
         'lower_window': 0,
         'upper_window': 1,
         })
-    king_maha_vajiralongkorn_birthday = pd.DataFrame({ #12
-        'holiday': 'King Maha Vajiralongkorn Birthday',
-        'ds': pd.to_datetime(['2021-07-28', '2020-07-28', '2019-07-28']),
-        'lower_window': 0,
-        'upper_window': 1,
-        })
+    # king_maha_vajiralongkorn_birthday = pd.DataFrame({ #12
+    #     'holiday': 'King Maha Vajiralongkorn Birthday',
+    #     'ds': pd.to_datetime(['2021-07-28', '2020-07-28', '2019-07-28']),
+    #     'lower_window': 0,
+    #     'upper_window': 1,
+    #     })
     mother_birthday = pd.DataFrame({ #13
         'holiday': 'Queen Sirikit, Mother’s Birthday',
         'ds': pd.to_datetime(['2021-08-12', '2020-08-12', '2019-08-12', '2018-08-12', '2017-08-12', '2016-08-12', '2015-08-12', '2014-08-12', '2013-08-12', '2012-08-12', '2011-08-12', '2010-08-12']),
@@ -334,18 +305,18 @@ elif(infoType == 'Prediction'):
         'lower_window': 0,
         'upper_window': 1,
         })
-    king_bhumibol_the_great_memorial = pd.DataFrame({ #15
-        'holiday': 'King Bhumibol Adulyadej The Great Memorial',
-        'ds': pd.to_datetime(['2021-10-13', '2020-10-13', '2019-10-13', '2018-10-13', '2017-10-13']),
-        'lower_window': 0,
-        'upper_window': 1,
-        })
-    s_king_chulalongkorn_memorial = pd.DataFrame({ #16(Special**Only Year-Substitution for King Chulalongkorn Memorial Day (Shifted from 25th Oct))
-        'holiday': 'Substitution for King Chulalongkorn Memorial', 
-        'ds': pd.to_datetime(['2021-10-22']),
-        'lower_window': 0,
-        'upper_window': 1,
-        })
+    # king_bhumibol_the_great_memorial = pd.DataFrame({ #15
+    #     'holiday': 'King Bhumibol Adulyadej The Great Memorial',
+    #     'ds': pd.to_datetime(['2021-10-13', '2020-10-13', '2019-10-13', '2018-10-13', '2017-10-13']),
+    #     'lower_window': 0,
+    #     'upper_window': 1,
+    #     })
+    # s_king_chulalongkorn_memorial = pd.DataFrame({ #16(Special**Only Year-Substitution for King Chulalongkorn Memorial Day (Shifted from 25th Oct))
+    #     'holiday': 'Substitution for King Chulalongkorn Memorial', 
+    #     'ds': pd.to_datetime(['2021-10-22']),
+    #     'lower_window': 0,
+    #     'upper_window': 1,
+    #     })
     king_chulalongkorn_memorial = pd.DataFrame({ #17
         'holiday': 'king_chulalongkorn_memorial',
         'ds': pd.to_datetime(['2021-10-23', '2020-10-23', '2019-10-23', '2018-10-23', '2017-10-23', '2016-10-23', '2015-10-23', '2014-10-23', '2013-10-23', '2012-10-23', '2011-10-23', '2010-10-23']),
@@ -358,12 +329,12 @@ elif(infoType == 'Prediction'):
         'lower_window': 0,
         'upper_window': 1,
         })
-    s_king_bhumibol_the_great_birthday = pd.DataFrame({ #19(Special**Only Year-Substitution for King Bhumibol The Great Birthday)
-        'holiday': 'Substitution for King Bhumibol The Great Birthday',
-        'ds': pd.to_datetime(['2021-12-06']),
-        'lower_window': 0,
-        'upper_window': 1,
-        })
+    # s_king_bhumibol_the_great_birthday = pd.DataFrame({ #19(Special**Only Year-Substitution for King Bhumibol The Great Birthday)
+    #     'holiday': 'Substitution for King Bhumibol The Great Birthday',
+    #     'ds': pd.to_datetime(['2021-12-06']),
+    #     'lower_window': 0,
+    #     'upper_window': 1,
+    #     })
     constitution = pd.DataFrame({ #20
         'holiday': 'Constitution',
         'ds': pd.to_datetime(['2021-12-10', '2020-12-10', '2019-12-10', '2018-12-10', '2017-12-10', '2016-12-10', '2015-12-10', '2014-12-10', '2013-12-10', '2012-12-10', '2011-12-10', '2010-12-10']),
@@ -376,39 +347,45 @@ elif(infoType == 'Prediction'):
         'lower_window': 0,
         'upper_window': 1,
         })
-    new_holidays = pd.concat((new_year, chinese_new_year, makha_bucha, chakri, songkran, coronation, visakha_bucha, queen_suthida_birthday, asanha_bucha, buddhist_lent, s_asanha_bucha, 
-                              king_maha_vajiralongkorn_birthday, mother_birthday, prince_of_songkla_memorial, king_bhumibol_the_great_memorial, s_king_chulalongkorn_memorial, 
-                              king_chulalongkorn_memorial, king_bhumibol_the_great_birthday, s_king_bhumibol_the_great_birthday, constitution, new_year_eve))
-    
-#Making Predictions
-    m2 = Prophet(holidays=new_holidays, daily_seasonality=True)
-    m2.fit(df_train)
-    future2 = m2.make_future_dataframe(periods=period, include_history=True)
-    forecast2 = m2.predict(future2)
+    new_holidays = pd.concat((new_year, chinese_new_year, makha_bucha, chakri, songkran, coronation, visakha_bucha, asanha_bucha, buddhist_lent, s_asanha_bucha, 
+                               mother_birthday, prince_of_songkla_memorial, king_chulalongkorn_memorial, king_bhumibol_the_great_birthday, constitution, new_year_eve)) #queen_suthida_birthday, king_bhumibol_the_great_memorial, s_king_chulalongkorn_memorial, king_maha_vajiralongkorn_birthday, s_king_bhumibol_the_great_birthday
+
+#Make Prediction
+    m1 = Prophet(holidays=new_holidays, daily_seasonality=True)
+    m1.fit(df_train)
+    # Create Future Dates
+    future = m1.make_future_dataframe(periods=period, include_history=True)
+    # Predict Prices
+    forecast = m1.predict(future)
 
     st.subheader('Price Forecast 💸')
-    st.write(forecast2.sort_values(by='ds', ascending=False))
+    st.write(forecast.sort_values(by='ds', ascending=False))
 
     #Sklearn Metrics
-    metric_df = (forecast2.set_index('ds')[['yhat']].join(df_train.set_index('ds')[['y']]).reset_index()).sort_values(by='ds', ascending=False)
+    metric_df = (forecast.set_index('ds')[['yhat']].join(df_train.set_index('ds')[['y']]).reset_index()).sort_values(by='ds', ascending=False).rename(columns={"yhat": "Predicted", "y": "Actual"})
     metric_df.dropna(inplace=True)
     st.write(metric_df)
     
     #R2 OR R-Squared
-    st.write('R-Squared = ', r2_score(metric_df.y, metric_df.yhat))
+    st.sidebar.write('R-Squared')
+    st.sidebar.write(r2_score(metric_df.Actual, metric_df.Predicted))
     #MAE OR Mean Absolute Error
-    st.write('Mean Absolute Error = ', mean_absolute_error(metric_df.y, metric_df.yhat))
+    st.sidebar.write('Mean Absolute Error')
+    st.sidebar.write(mean_absolute_error(metric_df.Actual, metric_df.Predicted))
     #MSE OR Mean Squared Error
-    st.write('Mean Squared Error = ', mean_squared_error(metric_df.y, metric_df.yhat))
+    st.sidebar.write('Mean Squared Error')
+    st.sidebar.write(mean_squared_error(metric_df.Actual, metric_df.Predicted))
     #RMSE OR Root Mean Square Error
-    st.write('Root Mean Square Error = ', metrics.rmse(metric_df.y, metric_df.yhat))
+    st.sidebar.write('Root Mean Square Error')
+    st.sidebar.write(math.sqrt(mean_squared_error(metric_df.Actual, metric_df.Predicted)))
 
-    fig2 = plot_plotly(m2, forecast2)
-    st.plotly_chart(fig2)
+    st.subheader('Plot Chart Prediction')
+    fig1 = plot_plotly(m1, forecast)
+    st.plotly_chart(fig1)
 
-    #st.write('forecast components')
-    fig2 = m2.plot_components(forecast2)
-    st.write(fig2)
+    st.subheader('Forecast Components')
+    fig1 = m1.plot_components(forecast)
+    st.write(fig1)
 
 else:
     def show():
