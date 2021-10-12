@@ -7,5 +7,3 @@ fbprophet==0.7.1
 yfinance ==0.1.63
 pystan==2.19.1.1
 scikit-learn==0.24.2
-ml-metrics==0.1.0
-metrics==0.3.3
