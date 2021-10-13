@@ -359,7 +359,7 @@ elif(infoType == 'Prediction'):
     forecast = m1.predict(future)
 
     st.subheader('Price Forecast 💸')
-    st.write(forecast.sort_values(by='ds', ascending=False))
+    st.write(forecast[['ds', 'yhat', 'yhat_lower', 'yhat_upper']].sort_values(by='ds', ascending=False))
 
     #Sklearn Metrics
     metric_df = (forecast.set_index('ds')[['yhat']].join(df_train.set_index('ds')[['y']]).reset_index()).sort_values(by='ds', ascending=False).rename(columns={"yhat": "Predicted", "y": "Actual"})
