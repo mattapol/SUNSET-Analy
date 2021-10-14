@@ -225,12 +225,12 @@ elif(infoType == 'Prediction'):
         'lower_window': 0,
         'upper_window': 1, 
         })
-    chinese_new_year = pd.DataFrame({ #2(Special**The First Year)
-        'holiday': 'Chinese New Year',
-        'ds': pd.to_datetime(['2021-02-12', '2020-02-12', '2019-02-12', '2018-02-12', '2017-02-12', '2016-02-12', '2015-02-12', '2014-02-12', '2013-02-12', '2012-02-12', '2011-02-12', '2010-02-12']),
-        'lower_window': 0,
-        'upper_window': 1,
-        })
+#     chinese_new_year = pd.DataFrame({ #2(Special**The First Year)
+#         'holiday': 'Chinese New Year',
+#         'ds': pd.to_datetime(['2021-02-12']),
+#         'lower_window': 0,
+#         'upper_window': 1,
+#         })
     makha_bucha = pd.DataFrame({ #3
         'holiday': 'Makha Bucha',
         'ds': pd.to_datetime(['2021-02-26', '2020-02-26', '2019-02-26', '2018-02-26', '2017-02-26', '2016-02-26', '2015-02-26', '2014-02-26', '2013-02-26', '2012-02-26', '2011-02-26', '2010-02-26']),
