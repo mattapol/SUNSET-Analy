@@ -347,8 +347,9 @@ elif(infoType == 'Prediction'):
         'lower_window': 0,
         'upper_window': 1,
         })
-    new_holidays = pd.concat((new_year, chinese_new_year, makha_bucha, chakri, songkran, coronation, visakha_bucha, asanha_bucha, buddhist_lent, s_asanha_bucha, 
-                               mother_birthday, prince_of_songkla_memorial, king_chulalongkorn_memorial, king_bhumibol_the_great_birthday, constitution, new_year_eve)) #queen_suthida_birthday, king_bhumibol_the_great_memorial, s_king_chulalongkorn_memorial, king_maha_vajiralongkorn_birthday, s_king_bhumibol_the_great_birthday
+    new_holidays = pd.concat((new_year, makha_bucha, chakri, songkran, coronation, visakha_bucha, asanha_bucha, buddhist_lent, s_asanha_bucha, 
+                               mother_birthday, prince_of_songkla_memorial, king_chulalongkorn_memorial, king_bhumibol_the_great_birthday, constitution, new_year_eve)) 
+                                #queen_suthida_birthday, king_bhumibol_the_great_memorial, s_king_chulalongkorn_memorial, king_maha_vajiralongkorn_birthday, s_king_bhumibol_the_great_birthday, chinese_new_year
 
 #Make Prediction
     m1 = Prophet(holidays=new_holidays, daily_seasonality=True)
