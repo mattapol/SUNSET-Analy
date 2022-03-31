@@ -5,7 +5,7 @@ import datetime as dt
 from plotly import graph_objs as go
 
 st.set_page_config(
-    page_title="SUNSET50 - Analysis",
+    page_title="SUNSET - Analysis",
     page_icon="favicon.ico",
 )
 
@@ -225,12 +225,12 @@ elif(infoType == 'Prediction'):
         'lower_window': 0,
         'upper_window': 1, 
         })
-#     chinese_new_year = pd.DataFrame({ #2(Special**The First Year)
-#         'holiday': 'Chinese New Year',
-#         'ds': pd.to_datetime(['2021-02-12']),
-#         'lower_window': 0,
-#         'upper_window': 1,
-#         })
+    chinese_new_year = pd.DataFrame({ #2(Special**The First Year)
+        'holiday': 'Chinese New Year',
+        'ds': pd.to_datetime(['2021-02-12', '2020-02-12', '2019-02-12', '2018-02-12', '2017-02-12', '2016-02-12', '2015-02-12', '2014-02-12', '2013-02-12', '2012-02-12', '2011-02-12', '2010-02-12']),
+        'lower_window': 0,
+        'upper_window': 1,
+        })
     makha_bucha = pd.DataFrame({ #3
         'holiday': 'Makha Bucha',
         'ds': pd.to_datetime(['2021-02-26', '2020-02-26', '2019-02-26', '2018-02-26', '2017-02-26', '2016-02-26', '2015-02-26', '2014-02-26', '2013-02-26', '2012-02-26', '2011-02-26', '2010-02-26']),
@@ -347,9 +347,8 @@ elif(infoType == 'Prediction'):
         'lower_window': 0,
         'upper_window': 1,
         })
-    new_holidays = pd.concat((new_year, makha_bucha, chakri, songkran, coronation, visakha_bucha, asanha_bucha, buddhist_lent, s_asanha_bucha, 
-                               mother_birthday, prince_of_songkla_memorial, king_chulalongkorn_memorial, king_bhumibol_the_great_birthday, constitution, new_year_eve)) 
-                                #queen_suthida_birthday, king_bhumibol_the_great_memorial, s_king_chulalongkorn_memorial, king_maha_vajiralongkorn_birthday, s_king_bhumibol_the_great_birthday, chinese_new_year
+    new_holidays = pd.concat((new_year, chinese_new_year, makha_bucha, chakri, songkran, coronation, visakha_bucha, asanha_bucha, buddhist_lent, s_asanha_bucha, 
+                               mother_birthday, prince_of_songkla_memorial, king_chulalongkorn_memorial, king_bhumibol_the_great_birthday, constitution, new_year_eve)) #queen_suthida_birthday, king_bhumibol_the_great_memorial, s_king_chulalongkorn_memorial, king_maha_vajiralongkorn_birthday, s_king_bhumibol_the_great_birthday
 
 #Make Prediction
     m1 = Prophet(holidays=new_holidays, daily_seasonality=True)
@@ -359,13 +358,13 @@ elif(infoType == 'Prediction'):
     # Predict Prices
     forecast = m1.predict(future)
 
-    st.subheader('Price Forecast 💸')
-    st.write(forecast[['ds', 'yhat', 'yhat_lower', 'yhat_upper']].sort_values(by='ds', ascending=False))
+    st.subheader('Plot Chart Prediction')
+    fig1 = plot_plotly(m1, forecast)
+    st.plotly_chart(fig1)
 
     #Sklearn Metrics
-    metric_df = (forecast.set_index('ds')[['yhat']].join(df_train.set_index('ds')[['y']]).reset_index()).sort_values(by='ds', ascending=False).rename(columns={"yhat": "Predicted", "y": "Actual"})
+    metric_df = (forecast.set_index('ds')[['yhat']].join(df_train.set_index('ds')[['y']]).reset_index()).sort_values(by='ds', ascending=False).rename(columns={"ds": "Date", "yhat": "Predicted", "y": "Actual"})
     metric_df.dropna(inplace=True)
-    st.write(metric_df)
     
     #R2 OR R-Squared
     st.sidebar.write('R-Squared')
