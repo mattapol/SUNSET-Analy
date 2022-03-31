@@ -380,9 +380,33 @@ elif(infoType == 'Prediction'):
     st.sidebar.write('Root Mean Square Error')
     st.sidebar.write(math.sqrt(mean_squared_error(metric_df.Actual, metric_df.Predicted)))
 
-    st.subheader('Plot Chart Prediction')
-    fig1 = plot_plotly(m1, forecast)
-    st.plotly_chart(fig1)
+    st.subheader('Price Forecast 💸')
+    st.markdown('Date = **_วันที่หุ้นเปิดทําการ_**')
+    st.markdown('Predic_lower = **_ราคาทํานายหุ้นขอบเขตตํ่าสุด_**')
+    st.markdown('Predic_upper = **_ราคาทํานายหุ้นขอบเขตสูงสุด_**')
+    st.markdown('Predicted = **_ราคาทํานายหุ้น_**')
+    st.markdown('Actual = **_ราคาหุ้นจริง_**')
+    st.caption('**** <NA> <ราคาหุ้นค่าจริงที่ยังไม่ออก>****')
+
+    # forecast.drop(['trend', 'trend_lower', 'trend_upper', 'Asanha Bucha', 'Asanha Bucha_lower', 'Asanha Bucha_upper',
+    #                'Buddhist Lent', 'Buddhist Lent_lower', 'Buddhist Lent_upper', 'Chakri', 'Chakri_lower', 'Chakri_upper', 
+    #                'Chinese New Year', 'Chinese New Year_lower', 'Chinese New Year_upper', 'Constitution', 'Constitution_lower',
+    #                'Constitution_upper', 'Coronation', 'Coronation_lower', 'Coronation_upper', 'King Bhumibol The Great Birthday',
+    #                'King Bhumibol The Great Birthday_lower', 'King Bhumibol The Great Birthday_upper', 'Makha Bucha', 
+    #                'Makha Bucha_lower', 'Makha Bucha_upper', 'New Year', 'New Year_lower', 'New Year_upper', 'New Year Eve',
+    #                'New Year Eve_lower', 'New Year Eve_upper', 'Prince of Songkla Memorial', 'Prince of Songkla Memorial_lower',
+    #                'Prince of Songkla Memorial_upper', 'Queen Sirikit, Mother’s Birthday', 'Queen Sirikit, Mother’s Birthday_lower',
+    #                'Queen Sirikit, Mother’s Birthday_upper', 'Songkran', 'Songkran_lower', 'Songkran_upper', 'Substitution for Asanha Bucha',
+    #                'Substitution for Asanha Bucha_lower', 'Substitution for Asanha Bucha_upper', 'Visakha Bucha', 'Visakha Bucha_lower',
+    #                'Visakha Bucha_upper', 'additive_terms', 'additive_terms_lower', 'additive_terms_upper', 'daily', 'daily_lower',
+    #                'daily_upper', 'holidays', 'holidays_lower', 'holidays_upper', 'king_chulalongkorn_memorial',
+    #                'king_chulalongkorn_memorial_lower', 'king_chulalongkorn_memorial_upper', 'weekly', 'weekly_lower', 'weekly_upper',
+    #                'yearly', 'yearly_lower', 'yearly_upper', 'multiplicative_terms', 'multiplicative_terms_lower', 'multiplicative_terms_upper'], axis=1, inplace=True)
+    # fc = forecast.sort_values(by='ds', ascending=False).rename(columns={"ds": "Date", "yhat_lower": "Predic_lower", "yhat_upper": "Predic_upper", "yhat": "Predicted", "y": "Actual"})
+    # st.write(fc)
+
+    mt = (forecast.set_index('ds')[['yhat', 'yhat_lower', 'yhat_upper']].join(df_train.set_index('ds')[['y']]).reset_index()).sort_values(by='ds', ascending=False).rename(columns={"ds": "Date", "yhat_lower": "Predic_lower", "yhat_upper": "Predic_upper", "yhat": "Predicted", "y": "Actual"})
+    st.write(mt)
 
     st.subheader('Forecast Components')
     fig1 = m1.plot_components(forecast)
